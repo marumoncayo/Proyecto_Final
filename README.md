@@ -62,6 +62,23 @@ raw.prices_daily          -- Precios OHLCV diarios
 -- Esquema ANALYTICS (features procesadas)
 analytics.daily_features  -- Features + target para ML
 ```
+
+##  Quick Start
+
+### **1. Prerequisitos**
+- Docker & Docker Compose instalados
+- 8GB RAM mínimo
+- 10GB espacio en disco
+
+### **2. Configuración Inicial**
+```bash
+# Clonar repositorio
+git clone [tu-repo]
+cd proyecto-trading
+
+# Copiar variables de ambiente
+cp .env.example .env
+```
 ### **3. Levantar Servicios**
 ```bash
 # Levantar Postgres y Jupyter
@@ -356,5 +373,70 @@ Content-Type: application/json
 | Cobertura de fechas | > 95% | 100% | bien |
 
 ---
+##  Comandos Útiles
 
+### **Docker**
+```bash
+# Ver servicios activos
+docker compose ps
 
+# Ver logs de un servicio
+docker compose logs jupyter-notebook
+docker compose logs model-api
+docker compose logs feature-builder
+
+# Reiniciar un servicio
+docker compose restart model-api
+
+# Detener todo
+docker compose down
+
+# Detener y eliminar volúmenes (BORRA LA BD)
+docker compose down -v
+# Reconstruir imagen
+docker compose build feature-builder
+```
+
+### **Postgres**
+```bash
+# Conectar a Postgres
+docker compose exec postgres psql -U trading_user -d trading_db
+
+# Dentro de psql:
+\dt raw.*                           # Ver tablas en raw
+\dt analytics.*                     # Ver tablas en analytics
+\d raw.prices_daily                 # Describir tabla
+
+# Queries útiles
+SELECT COUNT(*) FROM raw.prices_daily;
+SELECT COUNT(*) FROM analytics.daily_features;
+
+SELECT ticker, COUNT(*), MIN(date), MAX(date) 
+FROM raw.prices_daily 
+GROUP BY ticker;
+
+# Salir
+\q
+```
+### **Feature Builder**
+```bash
+# Construir features para AAPL
+docker compose run --rm feature-builder \
+  --mode full \
+  --ticker AAPL \
+  --start-date 2021-01-01 \
+  --end-date 2025-11-28 \
+  --run-id run_001 \
+  --overwrite true
+
+# Construir solo un rango de fechas
+docker compose run --rm feature-builder \
+  --mode by-date-range \
+  --ticker AAPL \
+  --start-date 2025-01-01 \
+  --end-date 2025-11-28 \
+  --run-id run_002 \
+  --overwrite false
+```
+
+---
